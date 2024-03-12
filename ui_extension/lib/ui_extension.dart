@@ -622,28 +622,6 @@ extension WidgetExt on Widget {
     );
   }
 
-  //Column
-  Widget Col({
-    key,
-    mainAxisAlignment,
-    required MainAxisSize mainAxisSize,
-    required CrossAxisAlignment crossAxisAlignment,
-    TextDirection? textDirection,
-    required VerticalDirection verticalDirection,
-    TextBaseline? textBaseline,
-    List<Widget>? children,
-  }) {
-    var $children = [this, ...children ?? []];
-    return Column(
-      mainAxisSize: mainAxisSize,
-      crossAxisAlignment: crossAxisAlignment,
-      textDirection: textDirection,
-      verticalDirection: verticalDirection,
-      textBaseline: textBaseline,
-      children: $children,
-    );
-  }
-
 // center
   Widget center({double? widthFactor, double? heightFactor}) {
     return Center(
