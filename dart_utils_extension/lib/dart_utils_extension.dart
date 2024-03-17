@@ -293,3 +293,188 @@ extension IterableExt<T> on Iterable<T> {
     return (addedItems, deletedItems);
   }
 }
+
+extension MapExt<K, V> on Map<K, V> {
+  List<V> batchGet(Iterable<K> keys) {
+    List<V> res = [];
+    for (var key in keys) {
+      this[key]?.let((it) {
+        res.add(it);
+      });
+    }
+    return res;
+  }
+
+  List<R> mapToList<R>(R Function(K, V) mapper) {
+    return this.entries.map((entry) => mapper(entry.key, entry.value)).toList();
+  }
+
+  // 模仿 java compute
+  Map<K, V> compute(K key, V Function(K key, V? value) computer) {
+    var value = this[key];
+    var res = computer.call(key, value);
+    this[key] = res;
+    return this;
+  }
+
+  Map<K, V> copyUpdate(K key, V Function(V?) mapper) {
+    var res = Map<K, V>.from(this);
+    res[key] = mapper(res[key]);
+    return res;
+  }
+}
+
+extension IterableExt2<T> on Iterable<T> {
+  bool deepEqual<R>(Iterable<T> other, [R Function(T)? mapper]) {
+    return DeepCollectionEquality().equals(() {
+      if (mapper != null) {
+        return this.map(mapper);
+      } else {
+        return this;
+      }
+    }(), () {
+      if (mapper != null) {
+        return other.map(mapper);
+      } else {
+        return other;
+      }
+    }());
+  }
+
+  //toggle(Item) 存在就删除, 不存在就加入
+  void toggle(T? item) {
+    if (item == null) return;
+    if (this.contains(item)) {
+      if (this is List) {
+        (this as List).remove(item);
+      } else if (this is Set) {
+        (this as Set).remove(item);
+      } else {
+        throw "暂未实现";
+      }
+    } else {
+      if (this is List) {
+        (this as List).add(item);
+      } else if (this is Set) {
+        (this as Set).add(item);
+      } else {
+        throw "暂未实现";
+      }
+    }
+  }
+
+  Map<K, V> mapToMap<K, V>(K Function(T) keyMapper, V Function(T) valueMapper) {
+    return {for (var item in this) keyMapper(item): valueMapper(item)};
+  }
+
+  // 根据自定义的function 校验获取两个列表的相同对象
+  Iterable<T> fnIntersection(Iterable<T> other, bool Function(T a, T b)? predict) {
+    return this.where((item) => other.any((otherItem) => predict?.call(item, otherItem) ?? item == otherItem));
+  }
+
+  // 每隔一个插入一个对象 T, 两两之间有 T
+  List<T> insertBetween(T Function() element, {bool needSide = false}) {
+    List<T> result = [];
+    if (needSide) result.add(element.call());
+    for (var item in this) {
+      result
+        ..add(item)
+        ..add(element.call());
+    }
+    if (!needSide) result.removeLast(); // 移除最后一个多余的元素
+    return result;
+  }
+
+  Iterable<T> combine(Iterable<T> other) {
+    return this.followedBy(other);
+  }
+
+  // diff(List<T> other,Function(List<T>) onAdd,Function(List<T>) onDelete), 比对两个 this 列表的差异, 对其中的新增和 删除, 调用对应的回调函数
+  void diff(Iterable<T> other, Function(List<T>) onAdd, Function(List<T>) onDelete) {
+    final addedItems = other.where((item) => !contains(item)).toList();
+    final deletedItems = where((item) => !other.contains(item)).toList();
+    if (addedItems.isNotEmpty) {
+      onAdd.call(addedItems);
+    }
+    if (deletedItems.isNotEmpty) {
+      onDelete.call(deletedItems);
+    }
+  }
+
+  void diffWithIdx(
+    Iterable<T> other,
+    Function(List<(int, T)>) onAdd,
+    Function(List<(int, T)>) onDelete,
+    Function(List<(int, int, T)>) onMove, {
+    bool Function(T a, T b)? equalPredict,
+  }) {
+    List<(int, T)> addedItemsWithIdx = [];
+    List<(int, T)> deletedItemsWithIdx = [];
+    List<(int, int, T)> moveItemsWithIdx = [];
+    List<T> thisList = this.toList();
+    List<T> otherList = other.toList();
+    bool _equal(T a, T b) {
+      if (equalPredict != null) return equalPredict.call(a, b);
+      return a == b;
+    }
+
+    for (int i = 0; i < thisList.length; i++) {
+      var cur = thisList[i];
+      var idx = otherList.indexWhere((i) => _equal(cur, i));
+      if (idx == -1) {
+        deletedItemsWithIdx.add((i, cur));
+      } else if (idx != i) {
+        moveItemsWithIdx.add((i, idx, cur));
+      }
+    }
+
+    for (int i = 0; i < otherList.length; i++) {
+      if (!thisList.any((element) => _equal(element, otherList[i]))) {
+        addedItemsWithIdx.add((i, otherList[i]));
+      }
+    }
+
+    onAdd.call(addedItemsWithIdx);
+    onDelete.call(deletedItemsWithIdx);
+    onMove.call(moveItemsWithIdx);
+  }
+
+  // diffReturn: 比对两个 this 列表的差异, 返回其中的新增和删除的元素
+  (
+    List<T> /*add*/,
+    List<T> /*delete*/,
+  ) diffReturnNewDelete(
+    List<T> other, {
+    bool Function(T a, T b)? equalPredict,
+  }) {
+    final addedItems = other.where((item) {
+      if (equalPredict != null) {
+        return !any((element) => equalPredict(element, item));
+      }
+      return !contains(item);
+    }).toList();
+    final deletedItems = where((item) {
+      if (equalPredict != null) {
+        return !other.any((element) => equalPredict(element, item));
+      }
+      return !other.contains(item);
+    }).toList();
+    return (addedItems, deletedItems);
+  }
+}
+
+extension FutureExt<T> on Future<T> {
+  void predictThen(bool Function(T) predict, T Function(T) then) {
+    this.then((value) {
+      if (predict(value)) {
+        then(value);
+      }
+    });
+  }
+}
+
+extension SetExt<T> on Set<T> {
+  bool containsAny(Iterable<T> iterable) {
+    return this.any((element) => iterable.contains(element));
+  }
+}
