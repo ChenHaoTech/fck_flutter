@@ -328,7 +328,7 @@ extension WidgetExt on Widget {
       shape: shape ??
           () {
             return RoundedRectangleBorder(
-              borderRadius: borderRadius ?? BorderRadius.circular(32.0),
+              borderRadius: borderRadius ?? BorderRadius.circular(radius ?? 12),
             );
           }(),
       clipBehavior: clipBehavior,
