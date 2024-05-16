@@ -72,6 +72,7 @@ extension FnStringExtension on String {
 extension ListExt<T> on List<T> {
   // sum(int Function(T))
   num sum(num Function(T) func) {
+    if (this.isEmpty) return 0;
     return this.map(func).reduce((value, element) => value + element);
   }
 
