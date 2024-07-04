@@ -32,6 +32,7 @@ class GetInstance {
   /// Holds references to every registered Instance when using
   /// `Get.put()`
   static final Map<String, _InstanceBuilderFactory> _singl = {};
+  static Iterable<String> get singl => _singl.keys;
 
   /// Holds a reference to every registered callback when using
   /// `Get.lazyPut()`
