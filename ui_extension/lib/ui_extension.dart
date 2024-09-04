@@ -90,6 +90,8 @@ extension WidgetExt2 on Widget {
     void Function()? onInit,
     void Function()? onDispose,
     void Function()? onReassemble,
+    final Function()? onChangeDependencies,
+    final Function()? onUpdateWidget,
     Widget Function()? supplier,
   }) {
     return FnStatefulBuilder(
@@ -99,6 +101,8 @@ extension WidgetExt2 on Widget {
       onInit: () => onInit?.call(),
       onDispose: () => onDispose?.call(),
       onReassemble: () => onReassemble?.call(),
+      onChangeDependencies: onChangeDependencies,
+      onUpdateWidget: onUpdateWidget,
     );
   }
 

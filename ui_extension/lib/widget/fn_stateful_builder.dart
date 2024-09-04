@@ -4,10 +4,21 @@ class FnStatefulBuilder extends StatefulWidget {
   final void Function()? onInit;
   final Function()? onDispose;
   final Function()? onReassemble;
+  final Function()? onChangeDependencies;
+  final Function()? onUpdateWidget;
   final bool wantKeepAlive;
   final StatefulWidgetBuilder builder;
 
-  const FnStatefulBuilder({super.key, this.onInit, this.onDispose, required this.builder, this.wantKeepAlive = false, this.onReassemble});
+  const FnStatefulBuilder({
+    super.key,
+    this.onInit,
+    this.onDispose,
+    required this.builder,
+    this.wantKeepAlive = false,
+    this.onReassemble,
+    this.onChangeDependencies,
+    this.onUpdateWidget,
+  });
 
   @override
   State<FnStatefulBuilder> createState() => FnStatefulBuilderState();
@@ -25,6 +36,7 @@ class FnStatefulBuilderState extends State<FnStatefulBuilder> with AutomaticKeep
   @override
   void didUpdateWidget(FnStatefulBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
+    widget.onUpdateWidget?.call();
   }
 
   @override
@@ -56,5 +68,6 @@ class FnStatefulBuilderState extends State<FnStatefulBuilder> with AutomaticKeep
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    widget.onChangeDependencies?.call();
   }
 }
